@@ -234,11 +234,19 @@ export function extractSettings(
       }
     }
 
-    // VAuto devices (AC10 VAuto and AC11) use mode 8 for VAuto, not iVAPS.
+    // VAuto and ASV devices use mode 8 for VAuto/ASVAuto, not iVAPS.
     // AirCurve 10 ST-A uses mode 8 for iVAPS and must NOT be remapped.
     let papMode = MODE_MAP[modeNum] ?? `Mode ${modeNum}`;
-    if (isVAutoDevice && modeNum === 8) {
-      papMode = 'VAuto';
+    const isSTA = /st[-_]?a/i.test(deviceModel);
+    const isASV = /asv/i.test(deviceModel);
+    if (!isSTA && modeNum === 8) {
+      if (parsedCustomVAuto?.enabled) {
+        papMode = 'Custom VAuto';
+      } else if (isVAutoDevice) {
+        papMode = 'VAuto';
+      } else if (isASV) {
+        papMode = 'ASVAuto';
+      }
     }
 
     // Known-wrong-path guard (#1036): on AirSense in an auto mode (APAP/AutoSet,
