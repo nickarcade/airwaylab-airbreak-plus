@@ -216,3 +216,18 @@ export function findIdentificationFile(
     }) ?? null
   );
 }
+
+/**
+ * Find airbreak-plus custom settings file (CSG.tgt or CSG.set) from file list (case-insensitive).
+ */
+export function findCustomSettingsFile(
+  files: { name: string; path: string }[]
+): { name: string; path: string } | null {
+  return (
+    files.find((f) => {
+      const name = f.name.toLowerCase();
+      return name === 'csg.tgt' || name === 'csg.set';
+    }) ?? null
+  );
+}
+

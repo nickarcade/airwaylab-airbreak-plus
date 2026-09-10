@@ -5,6 +5,8 @@
 
 import type { MachineSettings } from '../types';
 import { parseSTR } from './edf-parser';
+import { parseCustomSettings } from './custom-settings-parser';
+export { parseCustomSettings } from './custom-settings-parser';
 
 interface DailySettings {
   [date: string]: MachineSettings;
@@ -64,9 +66,14 @@ const TYPED_SIGNAL_LABELS = new Set([
  * Returns a map of date string (YYYY-MM-DD) → MachineSettings.
  * Captures all S.* prefix signals into extendedSettings alongside typed fields.
  */
-export function extractSettings(strBuffer: ArrayBuffer, deviceModel: string): DailySettings {
+export function extractSettings(
+  strBuffer: ArrayBuffer,
+  deviceModel: string,
+  customSettingsText?: string
+): DailySettings {
   const { signals, startDateTime } = parseSTR(strBuffer);
   const dailySettings: DailySettings = {};
+  const parsedCustomVAuto = customSettingsText ? parseCustomSettings(customSettingsText) : null;
 
   // Log all signal labels for discovery
   const allLabels = signals.map((s) => s.label);
@@ -267,6 +274,7 @@ export function extractSettings(strBuffer: ArrayBuffer, deviceModel: string): Da
       extendedSettings: Object.keys(extended).length > 0 ? extended : undefined,
       settingsSource: untrustedAutoSetRange ? 'unavailable' : 'extracted',
       ...(untrustedAutoSetRange ? { unavailableReason: 'untrusted_autoset_range' as const } : {}),
+      ...(parsedCustomVAuto ? { customVAuto: parsedCustomVAuto } : {}),
     };
   }
 

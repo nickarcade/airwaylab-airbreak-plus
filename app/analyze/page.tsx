@@ -149,6 +149,47 @@ function AnalyzePageInner() {
   const hasTriggeredAutoUpload = useRef(false);
   const thresholdModalRef = useRef<ThresholdSettingsModalHandle>(null);
   const [localDataCleared, setLocalDataCleared] = useState(false);
+  const [hasImportedData, setHasImportedData] = useState(false);
+  const [importedNightCount, setImportedNightCount] = useState(0);
+
+  useEffect(() => {
+    fetch('/api/local-import')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.nights?.length > 0) {
+          setHasImportedData(true);
+          setImportedNightCount(d.nights.length);
+        }
+      })
+      .catch(() => {
+        // ignore
+      });
+  }, []);
+
+  const loadImportedData = useCallback(async () => {
+    const saved = await loadPersistedResults();
+    if (saved && saved.nights.length > 0) {
+      setPersistedData(saved);
+      hadOximetryRef.current = saved.nights.some((n) => !!n.oximetry);
+    } else {
+      try {
+        const res = await fetch('/api/local-import');
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.nights?.length > 0) {
+            for (const n of data.nights) {
+              n.date = new Date(n.date);
+              if (n.sessionStartTime) n.sessionStartTime = new Date(n.sessionStartTime);
+            }
+            setPersistedData(data);
+            hadOximetryRef.current = data.nights.some((n: NightResult) => !!n.oximetry);
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
 
   // Warn before closing/refreshing while analysis is in progress
   useEffect(() => {
@@ -834,6 +875,17 @@ function AnalyzePageInner() {
       {status === 'idle' && !isDemo && (
         !persistedData ? (
           <div className="mx-auto max-w-lg">
+            {hasImportedData && (
+              <div className="mb-4 flex flex-col items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 p-4 text-center">
+                <p className="text-sm font-medium text-foreground">
+                  Imported sleep data available ({importedNightCount} nights)
+                </p>
+                <Button size="sm" onClick={loadImportedData} className="gap-2">
+                  <Activity className="h-4 w-4" />
+                  Load Imported Sleep Data
+                </Button>
+              </div>
+            )}
             <DemoCTA onLoadDemo={loadDemo} />
             <FileUpload onFilesSelected={handleFiles} />
             {/* Mobile reminder — secondary, shown below file picker */}
@@ -856,6 +908,17 @@ function AnalyzePageInner() {
           </div>
         ) : (
           <div className="mx-auto max-w-lg">
+            {hasImportedData && (
+              <div className="mb-4 flex flex-col items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 p-4 text-center">
+                <p className="text-sm font-medium text-foreground">
+                  Imported sleep data available ({importedNightCount} nights)
+                </p>
+                <Button size="sm" onClick={loadImportedData} className="gap-2">
+                  <Activity className="h-4 w-4" />
+                  Load Imported Sleep Data
+                </Button>
+              </div>
+            )}
             <DemoCTA onLoadDemo={loadDemo} />
             <FileUpload onFilesSelected={handleFiles} />
             {/* Mobile reminder — secondary, shown below file picker */}

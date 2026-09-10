@@ -173,6 +173,56 @@ export interface MachineSettings {
   tubeType?: string;
   /** BMC heated tube level */
   heatedTubeLevel?: number | null;
+  // airbreak-plus Custom VAuto settings (optional, populated when CSG.tgt/CSG.set is present)
+  customVAuto?: CustomVAutoSettings;
+}
+
+export type ASVSensitivityLabel = 'Very Low' | 'Low' | 'Med' | 'High' | 'Very High';
+
+export interface CustomVAutoSettings {
+  /** True when Custom VAuto patch is active (RPO = 1) */
+  enabled: boolean;
+  /** ASV Max setting in cmH2O (from RCM, range 0.0-10.0 cmH2O) */
+  asvMax: number;
+  /** ASV Sensitivity label (from RXM: Very Low, Low, Med, High, Very High) */
+  asvSens: ASVSensitivityLabel;
+  /** ASV Sensitivity controller multiplier (0.50, 0.75, 1.00, 1.25, 1.50) */
+  asvSensMultiplier: number;
+  /** Custom multi-signal trigger and flow-shape cycle decisions (from RPH) */
+  customTriggerCycle: boolean;
+  /** Square Wave custom pressure shaping active (from RPF) */
+  squareWave: boolean;
+  /** ASV Backup Rate setting (from RPW) */
+  asvBackupRate: boolean;
+  /** Raw UART settings parsed from CSG.tgt / CSG.set */
+  rawSettings?: Record<string, string | number>;
+}
+
+export interface CustomVAutoMetrics {
+  /** Whether Custom VAuto was active for this analysis */
+  active: boolean;
+  /** Mean adaptive boost delivered above base PS during inspiration (cmH2O) */
+  asvBoostMean: number;
+  /** Peak adaptive boost reached during inspiration (cmH2O) */
+  asvBoostMax: number;
+  /** Percentage of breaths that engaged adaptive boost (>0.1 cmH2O boost) */
+  boostedBreathPct: number;
+  /** Percentage of breaths where adaptive boost was clipped by Max IPAP ceiling */
+  maxIpapClippedPct: number;
+  /** Mean expiratory pressure relief (EPS) below EPAP (cmH2O) */
+  epsReliefMean: number;
+  /** Peak expiratory pressure relief (EPS) below EPAP (cmH2O) */
+  epsReliefMax: number;
+  /** Effective delivered median PS across breaths (base PS + delivered boost) */
+  effectivePsMedian: number;
+  /** Effective delivered 95th percentile PS across breaths */
+  effectivePsP95: number;
+  /** Percentage of breaths with Ti < 0.7s that failed the EPS relief eligibility gate */
+  shortTiUnder07sPct: number;
+  /** Pre-trigger assist detected rate (% of breaths) */
+  preTriggerAssistPct: number;
+  /** Available headroom between delivered IPAP and Max IPAP ceiling (cmH2O) */
+  maxIpapHeadroomMedian: number;
 }
 
 export type CaffeineLevel = 'none' | 'before-noon' | 'afternoon' | 'evening';
@@ -391,6 +441,9 @@ export interface SettingsMetrics {
   tidalVolumeP75Ml: number;
   tidalVolumeCv: number;
   minuteVentProxy: number;
+
+  // airbreak-plus Custom VAuto metrics (populated when customVAuto is active)
+  customVAutoMetrics?: CustomVAutoMetrics;
 }
 
 export interface CrossDeviceResults {
