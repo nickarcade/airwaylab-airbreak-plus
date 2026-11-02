@@ -24,6 +24,7 @@
 
 # misc
 .DS_Store
+.nomedia
 *.pem
 *.key
 *.p12
@@ -58,7 +59,7 @@ prompts/
 !.github/prompts/
 specs/
 cache/
-research/
+/research/
 
 # WIP files (untracked dev work, excluded from tsc)
 _wip/

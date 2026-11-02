@@ -238,6 +238,19 @@ export function generateClinicalPatternInsights(params: GenerateParams): Insight
         context: 'Coupled pulse surges reflect sympathetic nervous system activation following airway resistance events. Discuss cardiovascular-respiratory coupling with your clinician.',
       });
     }
+
+    // UARS & Autonomic Surge Correlation (Guevarra et al. 2022, de Oliveira et al. 2016)
+    const machineAhi = current.machineSummary?.ahi ?? 0;
+    if (ox.hrClin10 >= 10 && (n.nedMean >= 6 || (n.reraIndex && n.reraIndex > 1.5)) && ox.spo2Mean >= 90 && machineAhi < 5) {
+      insights.push({
+        id: nextId(),
+        type: 'actionable',
+        title: 'Autonomic Heart Rate Surges Despite Normal AHI and SpO2',
+        body: `Pulse rate surges (${ox.hrClin10.toFixed(1)}/hr) coincide with elevated flow limitation (NED ${n.nedMean.toFixed(1)}%), while machine AHI remains low (${machineAhi.toFixed(1)}/hr) and SpO2 is preserved (${ox.spo2Mean.toFixed(0)}%).`,
+        category: 'correlation',
+        context: 'In upper airway resistance syndrome (UARS), peer-reviewed research (Guevarra 2022, de Oliveira 2016) shows that over 55% of flow-limited sequences provoke sympathetic heart rate surges rather than oxygen desaturations. This physiological pattern provides objective evidence of autonomic sleep fragmentation to review with your clinician.',
+      });
+    }
   }
 
   // 7. Settings & Notes context
