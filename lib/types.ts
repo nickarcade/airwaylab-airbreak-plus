@@ -194,6 +194,20 @@ export interface CustomVAutoSettings {
   squareWave: boolean;
   /** ASV Backup Rate setting (from RPW) */
   asvBackupRate: boolean;
+  /** AutoEPAP enabled (from RSA) */
+  autoEpap?: boolean;
+  /** AutoEPAP Min EPAP (from RDF) */
+  autoEpapMinEpap?: number;
+  /** AutoEPAP Max EPAP (from RDM) */
+  autoEpapMaxEpap?: number;
+  /** Fall Time in 8ms ticks (from RCW) */
+  fallTime?: number;
+  /** ST iBR enabled (from RXW) */
+  ibr?: boolean;
+  /** Header Clock enabled (from RXF) */
+  headerClock?: boolean;
+  /** Therapy graph monitoring enabled (from RXH) */
+  monitoring?: boolean;
   /** Raw UART settings parsed from CSG.tgt / CSG.set */
   rawSettings?: Record<string, string | number>;
 }
@@ -209,6 +223,8 @@ export interface CustomVAutoMetrics {
   boostedBreathPct: number;
   /** Percentage of breaths where adaptive boost was clipped by Max IPAP ceiling */
   maxIpapClippedPct: number;
+  /** Percentage of breaths where delivered IPAP exceeded menu Max IPAP due to adaptive boost */
+  maxIpapExceededPct?: number;
   /** Mean expiratory pressure relief (EPS) below EPAP (cmH2O) */
   epsReliefMean: number;
   /** Peak expiratory pressure relief (EPS) below EPAP (cmH2O) */

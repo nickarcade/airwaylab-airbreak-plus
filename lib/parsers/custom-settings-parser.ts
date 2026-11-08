@@ -85,6 +85,45 @@ export function parseCustomSettings(text: string): CustomVAutoSettings | null {
   const rpwRaw = raw['RPW'] !== undefined ? parseInt(String(raw['RPW']), 16) : 0;
   const asvBackupRate = rpwRaw === 1;
 
+  // RSA: AutoEPAP (0 = Off, 1 = On)
+  const autoEpap = raw['RSA'] !== undefined ? parseInt(String(raw['RSA']), 16) === 1 : undefined;
+
+  // RDF: AutoEPAP Min EPAP (hex value / 50.0 -> cmH2O)
+  let autoEpapMinEpap: number | undefined;
+  if (raw['RDF'] !== undefined) {
+    const rdfVal = parseInt(String(raw['RDF']), 16);
+    if (!isNaN(rdfVal) && rdfVal > 0) {
+      autoEpapMinEpap = Math.round((rdfVal / 50.0) * 10) / 10;
+    }
+  }
+
+  // RDM: AutoEPAP Max EPAP (hex value / 50.0 -> cmH2O)
+  let autoEpapMaxEpap: number | undefined;
+  if (raw['RDM'] !== undefined) {
+    const rdmVal = parseInt(String(raw['RDM']), 16);
+    if (!isNaN(rdmVal) && rdmVal > 0) {
+      autoEpapMaxEpap = Math.round((rdmVal / 50.0) * 10) / 10;
+    }
+  }
+
+  // RCW: Fall Time (in 8ms ticks)
+  let fallTime: number | undefined;
+  if (raw['RCW'] !== undefined) {
+    const rcwVal = parseInt(String(raw['RCW']), 16);
+    if (!isNaN(rcwVal)) {
+      fallTime = rcwVal;
+    }
+  }
+
+  // RXW: ST iBR (0 = Off, 1 = On)
+  const ibr = raw['RXW'] !== undefined ? parseInt(String(raw['RXW']), 16) === 1 : undefined;
+
+  // RXF: Header Clock (0 = Off, 1 = On)
+  const headerClock = raw['RXF'] !== undefined ? parseInt(String(raw['RXF']), 16) === 1 : undefined;
+
+  // RXH: Monitoring (0 = Off, 1 = On)
+  const monitoring = raw['RXH'] !== undefined ? parseInt(String(raw['RXH']), 16) === 1 : undefined;
+
   return {
     enabled,
     asvMax,
@@ -93,6 +132,13 @@ export function parseCustomSettings(text: string): CustomVAutoSettings | null {
     customTriggerCycle,
     squareWave,
     asvBackupRate,
+    autoEpap,
+    autoEpapMinEpap,
+    autoEpapMaxEpap,
+    fallTime,
+    ibr,
+    headerClock,
+    monitoring,
     rawSettings: raw,
   };
 }

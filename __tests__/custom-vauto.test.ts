@@ -38,6 +38,10 @@ describe('airbreak-plus Custom Settings Parser', () => {
     expect(res?.customTriggerCycle).toBe(true);
     expect(res?.squareWave).toBe(true);
     expect(res?.asvBackupRate).toBe(false);
+    expect(res?.fallTime).toBe(6);
+    expect(res?.monitoring).toBe(true);
+    expect(res?.headerClock).toBe(false);
+    expect(res?.ibr).toBe(false);
   });
 
   it('returns null for empty or non-custom text', () => {

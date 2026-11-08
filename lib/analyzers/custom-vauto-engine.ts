@@ -83,6 +83,7 @@ export function computeCustomVAutoMetrics(
 
   let boostedBreaths = 0;
   let clippedBreaths = 0;
+  let exceededBreaths = 0;
   let shortTiBreaths = 0;
   let preTriggerAssists = 0;
 
@@ -90,6 +91,9 @@ export function computeCustomVAutoMetrics(
     const b = breaths[bIdx]!;
     const ti = b.ti;
     const tv = b.tidalVolume;
+
+    // Reset per-breath peak state on inspiration (matching airbreak-plus patches/my_asv.c)
+    let finalIps = 0.0;
 
     // 1. Ti 0.7s Gate for EPS Expiratory Relief and Valid Breath Update
     const qualifiesForEps = ti >= 0.7;
@@ -119,12 +123,19 @@ export function computeCustomVAutoMetrics(
       // Boost is added above base pressure shape, capped by ASV Max
       const requestedBoost = pidSignal * (basePs * 0.8);
       breathBoost = clamp(requestedBoost, 0.0, asvMax);
+      finalIps = basePs + breathBoost;
+    } else {
+      finalIps = basePs;
     }
 
     // 3. Headroom to Max IPAP Ceiling
     // Delivered IPAP = estimated EPAP + basePs + breathBoost
     const nominalIpap = minEpap + basePs + breathBoost;
     maxIpapHeadroomList.push(Math.max(0, maxIpap - nominalIpap));
+
+    if (nominalIpap > maxIpap) {
+      exceededBreaths++;
+    }
 
     if (breathBoost > 0.1) {
       boostedBreaths++;
@@ -139,12 +150,14 @@ export function computeCustomVAutoMetrics(
     const effectivePs = basePs + breathBoost;
     effectivePsList.push(effectivePs);
 
-    // 4. Expiratory Pressure Relief (EPS) calculation (from wrapper_limit_max_pdiff.c:L115)
-    // relief = clamp((EPAP - PS) * 0.2, 0.4, 1.6)
-    // relief reduced if peak support exceeded base PS: relief - (boost * 0.25)
+    // 4. Expiratory Pressure Relief (EPS) calculation (from wrapper_limit_max_pdiff.c:L115 & custom_vauto.md)
+    // In airbreak-plus:
+    // relief = clamp(0.2 * (EPAP - PS/2), 0.4, 1.6)
+    // relief = max(0, relief - 0.25 * (peak_support - PS))
+    // The pre-ramp reference cmd_epap is EPAP + PS/2, so (cmd_epap - PS) = EPAP - PS/2.
     let epsRelief = 0.0;
     if (qualifiesForEps) {
-      const nominalRelief = clamp((minEpap - basePs) * 0.2, 0.4, 1.6);
+      const nominalRelief = clamp((minEpap - basePs / 2.0) * 0.2, 0.4, 1.6);
       epsRelief = Math.max(0.0, nominalRelief - (breathBoost * 0.25));
     }
     epsReliefList.push(epsRelief);
@@ -181,6 +194,7 @@ export function computeCustomVAutoMetrics(
     asvBoostMax: round1(deliveredBoosts[deliveredBoosts.length - 1] ?? 0),
     boostedBreathPct: round1((boostedBreaths / total) * 100),
     maxIpapClippedPct: round1((clippedBreaths / total) * 100),
+    maxIpapExceededPct: round1((exceededBreaths / total) * 100),
     epsReliefMean: round2(mean(epsReliefList)),
     epsReliefMax: round1(epsReliefList[epsReliefList.length - 1] ?? 0),
     effectivePsMedian: round1(percentile(effectivePsList, 50)),
